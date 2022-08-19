@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  # PHP service
+  app:
+    build: .
+    container_name: php-test-nutech
+    working_dir: /var/www/
+    volumes:
+      - ./src:/var/www/html/
+    ports:
+      - 8100:80
+
+  mysql-development:
+    image: mysql:8.0.17
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: testapp
+    ports:
+      - "3108:3306"
