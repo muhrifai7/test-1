@@ -6,7 +6,7 @@ services:
     container_name: php-test-nutech
     working_dir: /var/www/
     volumes:
-      - ./src:/var/www/html/
+      - ./src:/var/www/html
     ports:
       - 8100:80
 

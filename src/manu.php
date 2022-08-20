@@ -27,7 +27,7 @@
 				</nav>
 				<div id="cd-search" class="cd-search">
 					<form>
-						<input type="search" placeholder="Search...">
+						<input type="search" id="searching" placeholder="Cari Nama Produk">
 					</form>
 				</div>
 			</div>

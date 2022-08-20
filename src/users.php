@@ -1,43 +1,5 @@
 <?php
 $signin = $_POST["signin"] ? $_POST["signin"] :"";
-
-if(isset($new)){
-
- /*
-  $str="insert into products (name,price,description,colors,sizes,qunt,img,uid) values ('$name','$price','$disc','$colors[0]','$size[0]','$qunt','$img','$id')";
-  $qer=mysqli_query($con,$str);
-  if($qer){
-      echo "success";
-  }else{
-      echo "failed";
-  }
-  */
-}
-
-
-
-
-
-if(isset($update)){
-    $id=$_SESSION['id'];
- $str="UPDATE users SET uname='$name',uemail='$email',phone='$phone'  WHERE uid='$id'";
-   $qes=mysqli_query($con,$str);
-   if($qes){
-
-       header('location:account.php');
-   }else {
-
-       header('location:account.php');
-   }
-
-}
-
-
-
-
-
-
-
 if(isset($action)){
 if($_POST['action']=='logout'){
     logout();
@@ -58,7 +20,7 @@ if($signin){
 
 function signin($data){
     $curl = curl_init();
-    $url= "https://damp-cliffs-22486.herokuapp.com/v1";
+    $url= "https://nutech-test1.herokuapp.com/v1";
     curl_setopt_array($curl, array(
         CURLOPT_URL => $url.'/auth/signin',
         CURLOPT_RETURNTRANSFER => true,
@@ -80,22 +42,15 @@ function signin($data){
     $response = curl_exec($curl);
 
     curl_close($curl);
-    $result = json_decode($response);
-    if($result->status){
+    $result = json_decode($response,true);
+    if($result["status"] == 200){
         session_start();
-        $_SESSION['email']=$data->email;
-        $_SESSION['token']=$result->data->accesToken;
-        $_SESSION['token']="1";
-        $_SESSION['gid']="1";
-        $_SESSION['id']="1";
+        $_SESSION['email']=$data["email"];
+        $_SESSION['token']=$result["responseData"]["accessToken"];
         header('location:index.php');
     }else{
         session_start();
-        $_SESSION['token']="1";
-        $_SESSION['gid']="1";
-        $_SESSION['id']="1";
-        header('location:index.php');
-        // header('location:signin.php?error=1');
+        header('location:signin.php?error=1');
     }
 }
 

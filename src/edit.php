@@ -1,6 +1,56 @@
 <?php
-print_r($_POST);
-// todo hit get by id
+session_start();
+if (!isset($_SESSION['token'])){
+	header("location: signin.php");
+}
+function callAPI($method, $url, $data){
+	$curl = curl_init();
+	switch ($method){
+	   case "POST":
+		  curl_setopt($curl, CURLOPT_POST, 1);
+		  if ($data)
+			 curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+		  break;
+	   case "PUT":
+		  curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PUT");
+		  if ($data)
+			 curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+		  break;
+	   default:
+		  if ($data)
+			 $url = sprintf("%s?%s", $url, http_build_query($data));
+	}
+	// OPTIONS:
+	curl_setopt($curl, CURLOPT_URL, $url);
+	curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+		'Content-Type: application/json',
+		'hris-token: ' . $_SESSION['token']
+	));
+	curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	// EXECUTE:
+	$result = curl_exec($curl);
+	if(!$result){die("Connection Failure");}
+	curl_close($curl);
+	return $result;
+ }
+
+$id = $_POST["nama_barang"];
+$curl = curl_init();
+$response = array();
+if($id){
+	$get_data = callAPI('GET', "https://nutech-test1.herokuapp.com/v1/product/".$id, false);
+	$response = json_decode($get_data, true);
+}
+
+$res = array(
+	"id" => $response["data"]["id"],
+	"name" => $response["data"]["name"],
+	"file_name" => $response["data"]["file_name"],
+	"description" => $response["data"]["description"],
+	"price_buy" => $response["data"]["price_buy"],
+	"price_sale" => $response["data"]["price_sale"]
+);
 ?>
 
 <!DOCTYPE html>
@@ -36,34 +86,15 @@ $(window).load(function() {
     animation: "slide",
     controlNav: "thumbnails"
   });
-    $('#pro').on('change', function() {
-                         $.post(
-                  "users.php",
-                  { action: "logout" },
-                  function(data) {
-                      location.reload(true);
-                  }
-               );
-
-
-
   //alert( this.value );
 });
+
  $(function(){
              $('#color').multiSelect();
              $('#size').multiSelect();
-                        });
+ });
 
-});
 function load(){
- count=document.getElementById('fileupload');
-
-    if(count.files.length==3){
-       return true;
-   }else{
-       alert('plase select 3 images');
-       return false;
-   }
 }
 
 
@@ -95,6 +126,23 @@ function load(){
 				$('html,body').animate({scrollTop:$(this.hash).offset().top},1000);
 			});
 		});
+
+		$('#pro').on('change', function() {
+			console.log(this.value,"sdadasd")
+                if(this.value=='logout'){$.post("users.php", { action: "logout" },
+                  function(data) {
+						window.location.href ="signin.php";
+                  }
+               );}else if(this.value=='account'){
+       				window.location.href ="account.php";
+               	}else if(this.value=='add'){
+					window.location.href ="addnew.php";
+				}else if(this.value=='all'){
+					window.location.href ="index.php";
+               }
+
+			});
+
 </script>
 <!--//end-smooth-scrolling-->
 </head>
@@ -102,7 +150,7 @@ function load(){
 	<!--header-->
 	<div class="header">
 		<div class="top-header navbar navbar-default"><!--header-one-->
-			<?php if(!isset($_SESSION['id']))   include 'head/alert.php'; ?>
+			<?php if(!isset($_SESSION['token']))   include 'head/alert.php'; ?>
 		</div>
 		<div class="header-two navbar navbar-default"><!--header-two-->
 			<div class="container">
@@ -113,11 +161,18 @@ function load(){
 					</ul>
 				</div>
 				<div class="nav navbar-nav logo wow zoomIn animated" data-wow-delay=".7s">
-					<h1><a href="index.php">Modern <b>Shoppe</b><span class="tag">Everything for Kids world </span> </a></h1>
+					<h1><a href="index.php">Shooping</a></h1>
 				</div>
 				<div class="nav navbar-nav navbar-right header-two-right">
 					<div class="header-right my-account">
-						 <?php if(isset($_SESSION['id'])) include 'head/select.php'; ?>
+					<ul>
+						<li class="list">
+						<a href="index.php">Home</a>
+						</li>
+						<li class="list">
+						<a href="logout.php">Logout</a>
+						</li>
+					</ul>
 					</div>
 					<div class="header-right cart">
 						<a href="#"><span class="glyphicon glyphicon-shopping-cart" aria-hidden="true"></span></a>
@@ -150,6 +205,12 @@ function load(){
 	<!--breadcrumbs-->
 <div id="error"></div>
 <div id="state"></div>
+<div class="alert alert-danger" role="alert" id="state" style="display:none">
+	<strong id="error"></strong>
+</div>
+<div class="alert alert-success" role="alert" id="state1" style="display:none">
+	<strong id="success"></strong>
+</div>
 	<div class="single">
 		<div class="container">
 			<div class="single-info">
@@ -157,20 +218,14 @@ function load(){
 					<div class="flexslider">
 						<ul class="slides">
 							<li data-thumb="images/s1.jpg">
-								<div class="thumb-image"> <img src="images/s1.jpg" data-imagezoom="true" class="img-responsive" alt=""> </div>
-							</li>
-							<li data-thumb="images/s2.jpg">
-								 <div class="thumb-image"> <img src="images/s2.jpg" data-imagezoom="true" class="img-responsive" alt=""> </div>
-							</li>
-							<li data-thumb="images/s3.jpg">
-							   <div class="thumb-image"> <img src="images/s3.jpg" data-imagezoom="true" class="img-responsive" alt=""> </div>
+								<div class="thumb-image"> <img src=<?php echo "images/".$res["file_name"] ?> data-imagezoom="true" class="img-responsive" alt=""> </div>
 							</li>
 						</ul>
 					</div>
 				</div>
 				<div class="col-md-6 single-top-left simpleCart_shelfItem wow fadeInRight animated" data-wow-delay=".5s">
                                     <form method="post" action="" enctype="multipart/form-data" onsubmit="return load()">
-					<h3><input type="text" name="name" size="37" value="<?php echo $str['name'];?>"></h3>
+					<h3><input type="text" name="name" size="37" value="<?php echo $res['name'];?>"></h3>
                                         <div class="single-rating">
 						<span class="starRating">
 							<input id="rating5" type="radio" name="rating" value="5" checked>
@@ -187,46 +242,19 @@ function load(){
 						<p><?php echo $str['rate'];?> out of 5</p>
 						<a href="#">Add Your Review</a>
 					</div>
-                                        <table><tr><td><font color="orange" size="4">Price (&#8377) :  </font></td>
-                                                <td><h6 class="item_price">&nbsp;<input type="text" name="price" value="<?php echo $str['price'];?>"></h6></td></tr></table>
+                                        <table><tr><td><font color="orange" size="4">Price Buy (&#8377) :  </font></td>
+                                                <td><h6 class="item_price">&nbsp;<input type="text" name="price_buy" value="<?php echo $res['price_buy'];?>"></h6></td></tr></table>
+												<table><tr><td><font color="orange" size="4">Price Sale (&#8377) :  </font></td>
+                                                <td><h6 class="item_price">&nbsp;<input type="text" name="price_sale" value="<?php echo $res['price_sale'];?>"></h6></td></tr></table>
 					<br>
 
-
-
-
-                                        <font color="orange" size="4">Sizes :  </font> &nbsp;
-                                            <select id="size" name="size[]">
-                                 <option value="1">1-6M</option>
-                                 <option value="2">6-12M</option>
-                                 <option value="3">1-2Y</option>
-                                 <option value="4">2-3Y</option>
-                                 <option value="5">3-4Y</option></select>
-
-					<br>
-					<br>
-                                         <font color="orange" size="4">Colors :  </font>
-                                         <select id="color" name="colors[]">
-                                 <option value="3">Red</option>
-                                    <option value="4">Blue</option>
-                                    <option value="1">Yellow</option>
-                                     <option value="2">Green</option>
-                                     <option value="5">black</option>
-                                      <option value="6">pink</option>
-                                       <option value="7">white</option>
-                                        <option value="8">orange</option>
-                                         <option value="9">brown</option>
-
-                               </select>
 
 					<div class="clearfix"> </div><br>
-					<div class="quantity">
-					<font color="orange" size="4">Qty :  </font>	<input min="1" type="number" name="qnt" value="<?php echo $str['qunt'];?>" class="item_quantity">
-					</div>
                                          <table><tr><td valign="top"><br><font color="orange" size="4">Description :  </font></td>
-                                                  <td valign="top"><p>&nbsp;<textarea  cols="37" rows="3" name="description"><?php echo $str['description'];?></textarea> </p></td></tr></table>
-					<table><tr><td><font color="orange" size="4">Images :  </font></td><td><input id="fileupload" class="image" type="file" name="image[]" accept="image/*" multiple></td></tr></table><br>
+                                                  <td valign="top"><p>&nbsp;<textarea  cols="37" rows="3" name="description"><?php echo $res['description'];?></textarea> </p></td></tr></table>
+					<table><tr><td><font color="orange" size="4">Images :  </font></td><td><input id="fileupload" class="image" type="file" name="fileToUpload" id="fileToUpload"></td></tr></table><br>
 
-
+					<input type="text" hidden name="id" value="<?php echo $res['id'];?>">
                                             <input type="submit" name="update" value="Update">
 					</form>
 
@@ -277,33 +305,87 @@ function load(){
 </html>
 <?php
 if(isset($_POST['update'])){
-extract($_POST);
-// todo update by endpoint
-$str="update products set name='$name',price='$price',description='$description',colors='$colors[0]',sizes='$size[0]',qunt='$qnt' where pid='$id'";
+	extract($_POST);
+	$id = $_POST["id"];
+	$name = $_POST["name"];
+	$price_buy = $_POST["price_buy"];
+	$price_sale = $_POST["price_sale"];
+	$description = $_POST["description"];
 
-$qer=mysqli_query($con,$str);
+	$target_dir = "images/";
+	$filename=$_FILES["fileToUpload"]["name"];
+	$tel=explode(".",$filename);
+	$extension=end($tel);
+	$newfilename=$tel[0].".".$extension;
+	$target_file = $target_dir .$newfilename;
 
-  if($qer){
-      echo 'success<br>';
-      $str1="DELETE FROM color WHERE pid=$id";
+	$uploadOk = 1;
+	$imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+		$check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
+		if($check !== false) {
+		   // echo "File is an image - " . $check["mime"] . ".";
+			$uploadOk = 1;
+		} else {
+			echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
+	echo "<script>document.getElementById(\"error\").innerHTML=\" File is not an image.\";</script>";
 
-      $str2="DELETE FROM size WHERE pid=$id";
+			$uploadOk = 0;
+		}
+	if ($_FILES["fileToUpload"]["size"] > 1000000) {
+			echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
+	echo "<script>document.getElementById(\"error\").innerHTML+=\"Sorry, your file is too large.\";</script>";
 
-      if(mysqli_query($con, $str1) && mysqli_query($con, $str2)){
-           for($i=0;$i<count($colors);$i++){
-          $str="insert into color (pid,scid) values ('$id','$colors[$i]')";
-          mysqli_query($con, $str);
-      }
-          for($i=0;$i<count($size);$i++){
-          $str="insert into size (pid,scid) values ('$id','$size[$i]')";
-          mysqli_query($con, $str);
-      }
+		$uploadOk = 0;
+	}
+	if($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
+	&& $imageFileType != "gif" ) {
+				echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
+	echo "<script>document.getElementById(\"error\").innerHTML+=\"Sorry, only JPG, JPEG, PNG & GIF files are allowed.\";</script>";
 
-      echo "successfully updated";
-      }else "something went wrong";
+		$uploadOk = 0;
+	}
+	if ($uploadOk == 0) {
+				echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
+				echo "<script>document.getElementById(\"error\").innerHTML+=\" Sorry, your file was not uploaded.\";</script>";
+	} else {
+		if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+			// todo upload file
+			$curl = curl_init();
 
+			curl_setopt_array($curl, array(
+			CURLOPT_URL => 'https://nutech-test1.herokuapp.com/v1/product/'.$id,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => '',
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => 'PATCH',
+			CURLOPT_POSTFIELDS =>'{
+				"name":"' . $name . '",
+				"description":"' . $description . '",
+				"price_buy":"' . $price_buy . '",
+				"price_sale":"' . $price_sale . '",
+				"file_name":"' . $newfilename . '"
+			}',
+			CURLOPT_HTTPHEADER => array(
+				'hris-token: ' . $_SESSION['token'],
+				'Content-Type: application/json'
+			),
+			));
 
-  }else echo "failed";
+			$response = curl_exec($curl);
 
-}
+			curl_close($curl);
+			$res = json_decode($response,true);
+
+			if($res["status"] == 200){
+				echo "<script>document.getElementById(\"state1\").style.display=\"block\";</script>";
+			echo "<script>document.getElementById(\"success\").innerHTML+=\" product Update successfuly.\";</script>";
+			}else{
+				echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
+				echo "<script>document.getElementById(\"error\").innerHTML+=\" Sorry, there was an error uploading your file.\";</script>";
+			}
+	}}
+	}
 ?>

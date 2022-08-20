@@ -1,7 +1,7 @@
-
 <?php
+session_start();
 if (!isset($_SESSION['token'])){
-	// header("location: signin.php");
+	header("location: signin.php");
 }
 ?>
 <!DOCTYPE html>
@@ -50,25 +50,20 @@ Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, Sony
 				$('html,body').animate({scrollTop:$(this.hash).offset().top},1000);
 			});
 
-                      $('#pro').on('change', function() {
-						console.log(this.value,"this.value");
-                          if(this.value=='logout'){
-                         $.post("users.php",
-                  { action: "logout" },
+             $('#pro').on('change', function() {
+                if(this.value=='logout'){$.post("users.php", { action: "logout" },
                   function(data) {
-					window.location.href ="signin.php";
+						window.location.href ="signin.php";
                   }
                );}else if(this.value=='account'){
-       window.location.href ="account.php";
-
-               }else if(this.value=='add'){
-       window.location.href ="addnew.php";
-               }else if(this.value=='all'){
-       window.location.href ="uproducts.php";
+       				window.location.href ="account.php";
+               	}else if(this.value=='add'){
+					window.location.href ="addnew.php";
+				}else if(this.value=='all'){
+					window.location.href ="uproducts.php";
                }
 
-});
-
+			});
 		});
 
 
@@ -126,7 +121,20 @@ Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, Sony
 				<div class="clearfix"> </div>
 				<br>
 				<br>
-				<div id="pagination_area" style="text-align: center" class="mt-2 mb-5"></div>
+				<div id="pagination_area" style="text-align: center" class="mt-2 mb-5">
+				<nav aria-label="Page navigation example">
+						<ul class="pagination justify-content-end">
+							<li class="page-item disabled">
+							<a class="page-link" href="#" tabindex="-1">Previous</a>
+							</li>
+							<li class="page-item"><a class="page-link" href="#" id="p_1">1</a></li>
+							<li class="page-item"><a class="page-link" href="#" id="p_2">2</a></li>
+							<li class="page-item">
+							<a class="page-link" href="#">Next</a>
+							</li>
+						</ul>
+				</nav>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -154,52 +162,81 @@ Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, Sony
 			function $(selector) {
     			return document.querySelector(selector);
   			}
+
+			var p_2 = document.getElementById('p_2');
+			p_2.addEventListener('click', function() {
+				load_product(2,'')
+			});
+
+			var p_1 = document.getElementById('p_1');
+			p_1.addEventListener('click', function() {
+				load_product(1,'')
+			});
+
+			var page = 1;
+			var search= "";
+			var element = document.getElementById('searching');
+			element.addEventListener('input', function() {
+			setTimeout(() => {
+				load_product(1,element.value)
+			}, 2000);
+			});
+			var keyword = search ? search : "";
 			load_product(1, "");
-			function load_product(page = 1,query = ""){
+			function load_product(page = 1,query = keyword){
 				$("#product_area").style.display = "none";
 				$("#skeleton_area").style.display = "block";
 				$("#skeleton_area").innerHTML = make_skeleton();
+				let url_dev = "http://localhost:4001/v1/";
+				let url_prod = "https://nutech-test1.herokuapp.com/v1/";
 
-				fetch("https://fakestoreapi.com/products")
+				fetch(url_prod+`product?keyword=${query}&page=${page}`)
 				.then(function(response){
 					return response.json();
 				})
 				.then(function(responseData) {
-					responseData.data = 1;
-					console.log(responseData)
-        			if (true) {
-						if (responseData.length > 0) {
+        			if (responseData.status == 200) {
+						let {data} = responseData;
+						if (data.total_data > 0) {
 						var output = '<div class="row">';
-						for (var i = 0; i < responseData.length; i++) {
+						for (var i = 0; i < data.data.length; i++) {
 							output += '<div class="col-md-3 mb-3 p-4" style="margin-bottom:25px;text-align: center;">';
 							output +=
-							'<img src = "' +
-							responseData[i].image +
+							'<img src = "images/' +
+							data.data[i].file_name +
 							'" class="img-thumbnail text-center" style="height:200px;" />';
 							output +=
 								'<div class="mb-2 bg-info text-center" style="height:200px;">' +
-								'<p>' +
-								responseData[i].category
+								'<p>Nama Produk :' +
+								data.data[i].name
 								'</p>';
 								output +=
-								'<p>' +
-								responseData[i].description
+								'<p> Deskripsi :' +
+								data.data[i].description
 								'</p>';
 								output +=
-								'<h5>' +
-								responseData[i].price
+								'<h5> Harga Beli :' +
+								data.data[i].price_buy
 								'</h5>';
+								output +=
+								'<h5> Harga Jual :' +
+								data.data[i].price_sale
+								'</h5>';
+
 							output += '<div>'
 							output += '<p style="backround-color: red;"><a class="item_add" href=""> Add to cart</a></p>'
 							output += '</div>'
 							output += '<div>'
 							output += `<div><form action="edit.php" method="post">
-											<input type="text" name="nama_barang" hidden value=${responseData[i].category}>
+											<input type="text" name="nama_barang" hidden value=${data.data[i].id}>
 											<input type="submit" value="edit">
 									</form></div>`
 							output += '</div>'
 							output += '<div>'
-							output += '<button onclick="deleteRow(${i});">Delete</button>'
+							output += `<div><form action="delete.php" method="post">
+											<input type="text" name="nama_barang" hidden value=${data.data[i].id}>
+											<input type="submit" value="delete">
+									</form></div>`
 							output += '</div>'
 							output +=
 								'<div class="mb-2 bg-light text-dark" style="height:50px;"></div>';
@@ -210,6 +247,7 @@ Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, Sony
 							}
 							output += "</div>";
 						$("#product_area").innerHTML = output;
+
 						} else {
 							$("#product_area").innerHTML = '<p class="h6">No Product Found</p>';
 						}
@@ -220,21 +258,6 @@ Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, Sony
 
 					$("#skeleton_area").style.display = "none";
 					}, 2000);
-					var pagination = `<nav aria-label="Page navigation example">
-					<ul class="pagination justify-content-end">
-						<li class="page-item disabled">
-						<a class="page-link" href="#" tabindex="-1">Previous</a>
-						</li>
-						<li class="page-item"><a class="page-link" href="#">1</a></li>
-						<li class="page-item"><a class="page-link" href="#">2</a></li>
-						<li class="page-item"><a class="page-link" href="#">3</a></li>
-						<li class="page-item">
-						<a class="page-link" href="#">Next</a>
-						</li>
-					</ul>
-					</nav>`
-
-					$("#pagination_area").innerHTML = pagination;
 				})
 
 			}

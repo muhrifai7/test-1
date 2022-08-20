@@ -1,4 +1,8 @@
 <?php
+session_start();
+if (!isset($_SESSION['token'])){
+	header("location: signin.php");
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -79,7 +83,14 @@ Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, Sony
 				</div>
 				<div class="nav navbar-nav navbar-right header-two-right">
 					<div class="header-right my-account">
-                                      <?php include 'head/select2.php'; ?>
+					<ul>
+						<li class="list">
+						<a href="index.php">Home</a>
+						</li>
+						<li class="list">
+						<a href="logout.php">Logout</a>
+						</li>
+					</ul>
 
 					</div>
 					<div class="clearfix"> </div>
@@ -106,31 +117,13 @@ Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, Sony
 			<div class="login-body wow fadeInUp animated" data-wow-delay=".7s">
 
                             <form method="post" action="" enctype="multipart/form-data">
-                               Name: <input type="text" name="name" value="" placeholder="name">
-                               Price: <input type="text" name="price"  placeholder="Price" >
-                               Quantity: <input type="number" min="1" name="qunt" value="1"><br><br>
-                               Color: &nbsp; &nbsp; &nbsp;<select id="color" name="colors[]">
-                                 <option value="3">Red</option>
-                                    <option value="4">Blue</option>
-                                    <option value="1">Yellow</option>
-                                     <option value="2">Green</option>
-                                     <option value="5">black</option>
-                                      <option value="6">pink</option>
-                                       <option value="7">white</option>
-                                        <option value="8">orange</option>
-                                         <option value="9">brown</option>
+                               Name: <input type="text" name="name" value="" placeholder="Nama">
+                               Harga Beli: <input type="text" name="price_buy"  placeholder="Harga Beli" >
+                               Harga Jual: <input type="text" name="price_sale"  placeholder="Harga Jual" >
 
-                               </select><br><br>
-
-                                    Size: &nbsp;&nbsp; &nbsp; &nbsp;<select id="size" name="size[]">
-                                 <option value="1">1-6M</option>
-                                 <option value="2">6-12M</option>
-                                 <option value="3">1-2Y</option>
-                                 <option value="4">2-3Y</option>
-                                 <option value="5">3-4Y</option></select><br><br>
                                  <table><tr><td>Image:&nbsp;&nbsp; &nbsp;</td><td><input type="file" name="fileToUpload" id="fileToUpload"></td></tr></table><br>
 
-                                Description:<br><textarea name="disc" rows="4" cols="52"></textarea>
+                                Description:<br><textarea name="discription" rows="4" cols="52"></textarea>
                                     <input type="submit" name="new" value="Add">
 
 				</form>
@@ -186,84 +179,84 @@ echo "<script>document.getElementById(\"error\").innerHTML=\" \";</script>";
 ?>
 <?php
 if(isset($_POST['new'])){
-extract($_POST);
-$target_dir = "images/";
-$filename=$_FILES["fileToUpload"]["name"];
-$tel=explode(".",$filename);
-$extension=end($tel);
-$newfilename=$last.".".$extension;
+	extract($_POST);
+	$name = $_POST["name"];
+	$price_buy = $_POST["price_buy"];
+	$price_sale = $_POST["price_sale"];
+	$discription = $_POST["discription"];
+	$target_dir = "images/";
+	$filename=$_FILES["fileToUpload"]["name"];
+	$tel=explode(".",$filename);
+	$extension=end($tel);
+	$newfilename=$tel[0].".".$extension;
+	$target_file = $target_dir .$newfilename;
 
-$target_file = $target_dir .$newfilename;
+	$uploadOk = 1;
+	$imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+	$check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
+	if($check !== false) {
+		// echo "File is an image - " . $check["mime"] . ".";
+		$uploadOk = 1;
+	} else {
+		echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
+	echo "<script>document.getElementById(\"error\").innerHTML=\" File is not an image.\";</script>";
 
-$uploadOk = 1;
-$imageFileType = pathinfo($target_file,PATHINFO_EXTENSION);
+		$uploadOk = 0;
+	}
+	if ($_FILES["fileToUpload"]["size"] > 1000000) {
+		echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
+	echo "<script>document.getElementById(\"error\").innerHTML+=\"Sorry, your file is too large.\";</script>";
 
-    $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
-    if($check !== false) {
-       // echo "File is an image - " . $check["mime"] . ".";
-        $uploadOk = 1;
-    } else {
-        echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
-echo "<script>document.getElementById(\"error\").innerHTML=\" File is not an image.\";</script>";
+	$uploadOk = 0;
+	}
+	if($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
+	&& $imageFileType != "gif" ) {
+			echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
+	echo "<script>document.getElementById(\"error\").innerHTML+=\"Sorry, only JPG, JPEG, PNG & GIF files are allowed.\";</script>";
 
-        $uploadOk = 0;
-    }
-if ($_FILES["fileToUpload"]["size"] > 2000000) {
-        echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
-echo "<script>document.getElementById(\"error\").innerHTML+=\"Sorry, your file is too large.\";</script>";
-
-    $uploadOk = 0;
-}
-if($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
-&& $imageFileType != "gif" ) {
-            echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
-echo "<script>document.getElementById(\"error\").innerHTML+=\"Sorry, only JPG, JPEG, PNG & GIF files are allowed.\";</script>";
-
-    $uploadOk = 0;
-}
-if ($uploadOk == 0) {
-            echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
-echo "<script>document.getElementById(\"error\").innerHTML+=\" Sorry, your file was not uploaded.\";</script>";
-
-} else {
-
+	$uploadOk = 0;
+	}
+	if ($uploadOk == 0) {
+			echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
+			echo "<script>document.getElementById(\"error\").innerHTML+=\" Sorry, your file was not uploaded.\";</script>";
+	} else {
     if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
 		// todo upload file
-     $str="insert into products (name,price,description,colors,sizes,qunt,img,uid) values ('$name','$price','$disc','$colors[0]','$size[0]','$qunt','$newfilename','$id')";
-  $qer=mysqli_query($con,$str);
-  if($qer){
+		$curl = curl_init();
+		// $url= "https://nutech-test1.herokuapp.com/v1";
+		curl_setopt_array($curl, array(
+			CURLOPT_URL => "https://nutech-test1.herokuapp.com/v1/product",
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => '',
+			CURLOPT_MAXREDIRS => 10,
+			CURLOPT_TIMEOUT => 0,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_CUSTOMREQUEST => 'POST',
+			CURLOPT_POSTFIELDS =>'{
+				"name":"' . $name . '",
+				"description":"' . $description . '",
+				"price_buy":"' . $price_buy . '",
+				"price_sale":"' . $price_sale . '",
+				"file_name":"' . $newfilename . '"
+			}',
+			CURLOPT_HTTPHEADER => array(
+				'Content-Type: application/json',
+				'hris-token: ' . $_SESSION['token']
+			),
+		));
 
-      for($i=0;$i<count($colors);$i++){
-          $str="insert into color (pid,scid) values ('$last','$colors[$i]')";
-          mysqli_query($con, $str);
-      }
-          for($i=0;$i<count($size);$i++){
-          $str="insert into size (pid,scid) values ('$last','$size[$i]')";
-          mysqli_query($con, $str);
-      }
+		$response = curl_exec($curl);
 
-
-       echo "<script>document.getElementById(\"state1\").style.display=\"block\";</script>";
-echo "<script>document.getElementById(\"success\").innerHTML+=\" product added successfuly.\";</script>";
-
-  }else{
-echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
-echo "<script>document.getElementById(\"error\").innerHTML+=\" Sorry, there was an error uploading your file.\";</script>";
-
-  }
-
-
-
-
-
-
-
-
-    } else {
-echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
-echo "<script>document.getElementById(\"error\").innerHTML+=\" Sorry, there was an error uploading your file.\";</script>";
-
-    }
-}
+		curl_close($curl);
+		$result = json_decode($response,true);
+		if($result["status"] == 200){
+			echo "<script>document.getElementById(\"state1\").style.display=\"block\";</script>";
+			echo "<script>document.getElementById(\"success\").innerHTML+=\" product added successfuly.\";</script>";
+		}else{
+			echo "<script>document.getElementById(\"state\").style.display=\"block\";</script>";
+			echo "<script>document.getElementById(\"error\").innerHTML+=\" Sorry, there was an error uploading your file.\";</script>";
+		}
+}}
 }
 ?>

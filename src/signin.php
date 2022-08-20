@@ -54,16 +54,10 @@ Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, Sony
 	<!--login-->
 	<div class="login-page">
 	 <div class="login-page-bottom">
-            <div class="social-btn"><a href="#"><i>Sign In with Facebook</i></a></div>
-            <div class="social-btn sb-two"><a href="#"><i>Sign In with Twitter</i></a></div>
-
-
-			<p> - OR -</p>
-
 		</div>
 		<div class="widget-shadow">
 			<div class="login-top wow fadeInUp animated" data-wow-delay=".7s">
-				<h4>Welcome back to Modern Shopping ! <br> Not a Member? <a href="register.php">  Register Now »</a> </h4>
+				<h4>Welcome back to Shopping ! <br> Not a Member? <a href="register.php">  Register Now »</a> </h4>
 			</div>
 			<div class="login-body wow fadeInUp animated" data-wow-delay=".7s">
                             <?php
